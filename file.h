@@ -63,7 +63,7 @@ class File{
 public:
 	//std::string path;
 	FILE *fp;
-	File(const std::string &fname,char *mode="rb") {
+	File(const std::string &fname,const char *mode="rb") {
 		fp=fopen(fname.c_str(),mode);
 	}
 	~File(){close();}
@@ -87,6 +87,14 @@ public:
 		fread(&buf[0],sizeof(T),len,fp);
 		return len;
 	}
+	
+	void load(std::string &str){
+		long sz=size();
+		char* buf = new char[sz];
+		fread(buf,sz,1,fp);
+		str.assign(buf,sz);
+		delete [] buf;
+	}
 
 	long load(void *buf,long len){
 		fread(buf,len,1,fp);
@@ -102,6 +110,24 @@ public:
 		return fwrite(&buf[0],sizeof(T),buf.size(),fp);
 	}
 
+	template<typename T>
+	long write(const std::vector<T> &buf){
+		return fwrite(&buf[0],sizeof(T),buf.size(),fp);
+	}
+
+	template<typename T>
+	static long save(const std::string &fname, const std::vector<T> &buf){
+		File f(fname,"wb");
+		return f.write(buf);
+	}
+
+	template<typename T>
+	static long load(const std::string &fname, std::vector<T> &buf){
+		File f(fname,"r");
+		return f.load(buf);
+	}
+
+
 	long size(){
 		if (!fp) return -1;
 		long sz;
@@ -113,7 +139,7 @@ public:
 	}
 	bool exist(){return size()>=0;}
 	bool error(){return fp==NULL;}
-	void close(){if (fp) fclose(fp);}
+	void close(){if (fp) fclose(fp); fp=NULL;}
 	static int rename(const std::string &p1,const std::string &p2) {
 		return ::rename(p1.c_str(),p2.c_str());
 	}

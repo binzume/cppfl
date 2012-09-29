@@ -56,7 +56,7 @@ static std::string encode(const std::string &src,const ENCODE &to, const ENCODE 
 	iconv_t c = iconv_open(from,to);
 
 	do {
-		if (iconv(c,&lps,&len ,&dst2 ,&size) <0 ) return s; // error
+		if (iconv(c,const_cast<char**>(&lps),&len ,&dst2 ,&size) <0 ) return s; // error
 		s.append(dst,sizeof(dst)-size);
 		dst2=dst;
 		size = (size_t)sizeof(dst);
@@ -80,7 +80,7 @@ class StringIteratorProxy : public IStringIterator{
 	T sf;
 public:
 	StringIteratorProxy(const T &s):sf(s){}
-	StringIteratorProxy(typename const T::iterator &begin, typename const T::iterator &end):sf(begin,end){}
+	StringIteratorProxy(const typename T::iterator &begin, const typename T::iterator &end):sf(begin,end){}
 	int shift(){return sf.shift();}
 	bool eof(){return sf.eof();}
 	int operator *(){
@@ -118,7 +118,7 @@ public:
 
 template<typename T>
 class StringIterator_SJIS{
-	friend StringIteratorProxy< StringIterator_SJIS >;
+	friend class StringIteratorProxy< StringIterator_SJIS >;
 	T it,end;
 	inline bool isFirstByte(unsigned char c) {
 		return ((unsigned char)((c^0x20)-0xA1)<=0x3B);
@@ -148,7 +148,7 @@ public:
 
 template<typename T>
 class StringIterator_UTF8{
-	friend StringIteratorProxy< StringIterator_UTF8<T> >;
+	friend class StringIteratorProxy< StringIterator_UTF8<T> >;
 	T it,end;
 public:
 	typedef T iterator;
@@ -184,7 +184,7 @@ public:
 
 template<typename T>
 class StringIterator_EUC{
-	friend StringIteratorProxy< StringIterator_EUC >;
+	friend class StringIteratorProxy< StringIterator_EUC >;
 	T it,end;
 public:
 	typedef T iterator;
@@ -193,7 +193,7 @@ public:
 		int c = (unsigned char)*it;
 		if( c&0x80 )
 			c = (unsigned char)*(++it) | c<<8;
-		ir++;
+		it++;
 		return c&0x7f7f;
 	}
 	int shift(){
@@ -205,7 +205,7 @@ public:
 
 template<typename T>
 class StringIterator_JIS{
-	friend StringIteratorProxy< StringIterator_JIS >;
+	friend class StringIteratorProxy< StringIterator_JIS >;
 	T it,end;
 	int jismode;
 public:
@@ -213,11 +213,10 @@ public:
 	StringIterator_JIS(const T &begin_,const T &end_):it(begin_),end(end_) {};
 	int shift(T &it){
 
-		if (*tmp==0x1b) { // KI/KO
+		if (*it==0x1b) { // KI/KO
 			if (*++it=='$' && *++it=='B') {jismode=1;++it;}
 			if (*++it=='(' && *++it=='B') {jismode=0;++it;}
 		}
-
 
 		int c = (unsigned char)*it;
 		if( jismode )

@@ -129,6 +129,7 @@ public:
 		//*(long*)(buf+rowbytes*p.y+bpp*p.x)&=~bitmask;
 		//*(long*)(buf+rowbytes*p.y+bpp*p.x)|=v&bitmask;
 	}
+	// old
 	void clear(const PIXEL &c) {
 		for (int x=0;x<width;x++) *(PIXEL*)(buf+x*bpp)=c; // first line
 		for (int y=1;y<height;y++) {
@@ -137,6 +138,10 @@ public:
 				*((long*)buf+p+x)=*((long*)buf+x);
 			}
 		}
+	}
+	void clear(const Color &c) {
+		PIXEL pix(c);
+		clear(pix);
 	}
 	void clear() {
 		for (int i=0;i<rowbytes*height/4;i++) *((long*)buf+i)=0x00000000;

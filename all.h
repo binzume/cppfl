@@ -18,7 +18,7 @@ static __inline LONG_PTR SetWindowLongPtr(HWND hWnd, int nIndex, LONG_PTR dwNewL
 namespace kwlib{
 #include "base.h"
 #include "file.h"
-#include "thread.h"
+//#include "thread.h"
 }
 #include "application.h"
 #include "widget.h"

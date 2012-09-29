@@ -17,6 +17,7 @@ public:
 	using Pen::box;
 	using Pen::boxf;
 	using Pen::move;
+	using Pen::clear;
 	PenEx(){
 		win = NULL;
 		fupdate=false;
@@ -55,6 +56,10 @@ public:
 		DCPen::line(x,y,x2,y2);
 		if (fupdate) update();
 	}
+	void lineto(Point p) {
+		DCPen::lineto(p);
+		if (fupdate) update();
+	}
 	void box(int x,int y,int w,int h) {
 		DCPen::box(x,y,w,h);
 		if (fupdate) update(x,y,w,h);
@@ -71,6 +76,11 @@ public:
 		DCPen::circlef(cx,cy,r);
 		if (fupdate) update(cx-r,cy-r,r*2+1,r*2+1);
 	}
+	void draw(Point p,HDC hdc,const Rect &rc) {
+		DCPen::draw(p,hdc,rc);
+		if (fupdate) update(p.x,p.y,rc.w,rc.h);
+	}
+	
 };
 
 class BitmapWindow :public Form,public PenEx<BitmapWindow>{
@@ -307,6 +317,15 @@ public:
 	}
 	void color(int r,int g,int b) {
 		mpen->color(r,g,b);
+	}
+	void clear() {
+		mpen->clear();
+	}
+	void clear(const Color &c){
+		mpen->clear(c);
+	}
+	void draw(Point p,HDC hdc,Rect rc) {
+		mpen->draw(p,hdc,rc);
 	}
 
 };

@@ -18,6 +18,15 @@ public:
 		GetCursorPos(&p);
 		return p.x+(p.y<<16);
 	}
+	static Point point(){
+		POINT p;
+		GetCursorPos(&p);
+		return Point(p.x,p.y);
+	}
+	static void lclick(int x,int y){
+		mouse_event(MOUSEEVENTF_LEFTDOWN,x,y,0,NULL);
+		mouse_event(MOUSEEVENTF_LEFTUP,x,y,0,NULL);
+	}
 };
 
 class System {
@@ -33,6 +42,7 @@ public:
 			return keydown(k);
 		}
 	};
+	
 };
 
 #ifndef NOIMP
@@ -52,8 +62,24 @@ public:
 	~Screen() {
 		DeleteDC(hdc);
 	}
-	void capture(DIBitmap *bmp,int x,int y,int w,int h) {
-		BitBlt(bmp->hdc,0,0,w,h,hdc,x,y,SRCCOPY);
+	void capture(DIBitmap &bmp, int x, int y, int w, int h) {
+		BitBlt(bmp.getdc(),0,0,w,h,hdc,x,y,SRCCOPY);
+	}
+	void capture(DIBitmap &bmp, int x, int y) {
+		BitBlt(bmp.getdc(),0,0,bmp.width,bmp.height,hdc,x,y,SRCCOPY);
+	}
+	DIBitmap* capture(int x, int y, int w, int h) {
+		DIBitmap *bmp = new DIBitmap(w,h);
+		capture(*bmp, x, y, w, h);
+		return bmp;
+	}
+	static Size size(){
+		RECT rect;
+		SystemParametersInfo( SPI_GETWORKAREA, 0, &rect, 0 );
+		Size sz;
+		sz.width = rect.right - rect.left;
+		sz.height = rect.bottom - rect.top;
+		return sz;
 	}
 };
 #endif

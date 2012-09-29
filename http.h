@@ -43,6 +43,32 @@ std::string urldecode(const std::string &str)
 	return s;
 }
 
+class URI
+{
+public:
+	std::string host;
+	int port;
+	std::string path;
+	URI(const std::string& uri) {
+		parse(uri);
+	}
+	void parse(const std::string& url) {
+		using namespace std;
+		int s=0;
+		if (url.substr(0,7)=="http://") s=7;
+		int p=url.find("/",s);
+		host = url.substr(s, p-s);
+		path = url.substr(p);
+		port=80;
+		p=host.find(":");
+		if (p!=string::npos) {
+			port=atoi(host.substr(p+1).c_str());
+			host = host.substr(0, p);
+		}
+	}
+};
+
+
 class HttpResponse
 {
 public:
@@ -175,20 +201,8 @@ public:
 	
 	Socket request(const std::string &url, const std::string &data="")
 	{
-		using namespace std;
-		int s=0;
-		if (url.substr(0,7)=="http://") s=7;
-		int p=url.find("/",s);
-		string host = url.substr(s, p-s);
-		string path = url.substr(p);
-		int port=80;
-
-		p=host.find(":");
-		if (p!=string::npos) {
-			port=atoi(host.substr(p+1).c_str());
-			host = host.substr(0, p);
-		}
-		return request(host, port, path, data);
+		URI uri(url);
+		return request(uri.host, uri.port, uri.path, data);
 	}
 
 	// old method

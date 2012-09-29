@@ -1,6 +1,7 @@
 #ifndef _BASE_H
 #define _BASE_H
 
+#include <stdio.h>
 
 
 struct Point{
@@ -82,7 +83,7 @@ struct Color{
 	static const int white = 0xffffff;
 	static const int red = 0x0000ff;
 	static const int green = 0x00ff00;
-	static const int blue = 0x0000ff;
+	static const int blue = 0xff0000;
 	static const int yellow = 0x00ffff;
 	static const int magenta = 0xff00ff;
 	static const int cyan = 0xffff00;

@@ -10,6 +10,8 @@ typedef wchar_t htmlchar;
 typedef std::basic_string<wchar_t> htmlstring;
 typedef std::vector<class Element*> NodeList;
 //typedef std::basic_string<char> htmlstring;
+static const int NOTE_TYPE_TEXT = 3;
+static const int NOTE_TYPE_DOCUMENT = 9;
 
 
 static htmlstring& htmlunescape(htmlstring &dst, const htmlstring &src) {
@@ -79,6 +81,13 @@ public:
 	virtual htmlstring& getInnerText(htmlstring &s)=0;
 	virtual htmlstring getInnerText(){htmlstring s;return getInnerText(s);}
 	virtual ~Element(){}
+
+#ifndef WITHOUT_ATTRIBUTE
+	virtual NodeList& getElementsByAttribute(NodeList &list,const std::string &name,const std::string &value) {return list;}
+	virtual NodeList& getElementsByName(NodeList &list,const std::string &name){return list;}
+	virtual NodeList& getElementsByClassName(NodeList &list,const std::string &name){return list;}
+#endif
+
 };
 
 class Container : public Element {
@@ -179,8 +188,8 @@ public:
 	Document() : Container("_document"){
 		height=0;
 		nodeType = 9;
-		char *ct[] = {"br","img","hr","meta","link"};
-		for (int i=0;i<sizeof(ct)/sizeof(char*);++i) {
+		const char *ct[] = {"br","img","hr","meta","link"};
+		for (int i=0;i<sizeof(ct)/sizeof(const char*);++i) {
 			autoclose[ct[i]] = 1;
 		}
 	}

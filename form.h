@@ -1,5 +1,6 @@
 #ifndef _FORM_H
 #define _FORM_H
+#include <map>
 namespace kwlib{
 
 #define FORMWINDOW_CLASS "kwuiFormWindow"
@@ -14,32 +15,100 @@ namespace MessageBox{
 };
 typedef Event EventData;
 
+
+
+//------------------------------------------------------------------------------ menu
+class MenuHandler{
+	std::map<int,EventListenerFuncBase*> listeners;
+	int last;
+public:
+	MenuHandler() : last(1024){
+	}
+	~MenuHandler(){
+		for (std::map<int,EventListenerFuncBase*>::iterator it=listeners.begin();it!=listeners.end();++it) {
+			delete (*it).second;
+		}
+	}
+
+	template <typename T>
+	int add(int event,const T &listener){
+		last = event;
+		if(listeners[event]) delete listeners[event];
+		listeners[event] = new EventListenerFunc<T>(listener);
+		return event;
+	}
+
+	template <typename T>
+	int add(int event,T* listener){
+		last = event;
+		if(listeners[event]) delete listeners[event];
+		if (listener!=NULL) {
+			listeners[event] = new EventListenerFunc<T*>(listener);
+		} else {
+			listeners[event] = NULL;
+		}
+		return event;
+	}
+
+	template <typename T>
+	int add(T listener){
+		return add(last+1,listener);
+	}
+	template <typename T>
+	int add(T* listener){
+		return add(last+1,listener);
+	}
+
+
+	bool operator () (Event &e) {
+		if (listeners.count(e.id)) {
+			return (*listeners[e.id])(e);
+		}
+		//MessageBox::msgBox("ok");
+		return false;
+	}
+};
+
 template<typename T>
 class MenuContainer{
+	MenuHandler *m_handler;
 public:
 	HMENU hMenu;
-	MenuContainer(){
+	MenuContainer(MenuHandler *handler = NULL) :
+		m_handler(handler)
+	{
 		hMenu = CreatePopupMenu();
 	}
-	MenuContainer(HMENU m){
-		hMenu = m;
-	}
+	MenuContainer(HMENU m, MenuHandler *handler = NULL) :
+		hMenu(m) ,
+		m_handler(handler)  {}
 	~MenuContainer(){
 		//if (hMenu) DestroyMenu(hMenu);
 	}
-	HMENU handle(){return hMenu;}
+
+	MenuHandler* handler() const {return m_handler;}
+
+	HMENU handle() const {return hMenu;}
 	MenuContainer& add(const std::string &s,int id) {
 		if (!hMenu) CreatePopupMenu();
 		AppendMenu(hMenu, MF_ENABLED | MF_STRING ,id, s.c_str());
 		return *this;
 	}
+
+	template <typename T>
+	MenuContainer& add(const std::string &s,T* listener) {
+		int id=0;
+		if (m_handler) id=m_handler->add(listener);
+		if (!hMenu) CreatePopupMenu();
+		AppendMenu(hMenu, MF_ENABLED | MF_STRING ,id, s.c_str());
+		return *this;
+	}
+
 	MenuContainer& add(const std::string &s,const MenuContainer<T> &m){
 		if (!hMenu) CreatePopupMenu();
 		AppendMenu(hMenu, MF_ENABLED | MF_STRING | MF_POPUP , (UINT)m.hMenu, s.c_str());
 		return *this;
 	}
-
-
 
 	MenuContainer& add(T &mi){
 		if (!hMenu) CreatePopupMenu();
@@ -72,8 +141,8 @@ class MenuItem : public Menu{
 public:
 	MENUITEMINFO mii;
 	std::string mtext;
-	MenuContainer *m_parent;
-	MenuItem(const std::string &s="",int id=0) : Menu(NULL){
+	MenuContainer<MenuItem> *m_parent;
+	MenuItem(const std::string &s="",int id=0) : Menu(NULL,NULL){
 		mii.cbSize = sizeof(mii);
 		mii.fMask = MIIM_STATE  | MIIM_ID | MIIM_TYPE;
 		mii.fState=0;
@@ -120,8 +189,8 @@ public:
 		mii.dwTypeData = (char*)mtext.c_str();
 		SetMenuItemInfo(m_parent->hMenu,mii.wID,FALSE,&mii);
 	}
-	void parent(MenuContainer *m) {m_parent=m;}
-	MenuContainer& parent() {return *m_parent;}
+	void parent(MenuContainer<MenuItem> *m) {m_parent=m;}
+	MenuContainer<MenuItem>& parent() {return *m_parent;}
 	int menuID(){return mii.wID;}
 	int index(){
 		if (m_parent) return 0;
@@ -129,17 +198,19 @@ public:
 	}
 };
 
-typedef MenuContainer<MenuItem> Menu;
 
 class MainMenu : public Menu{
 public:
-	MainMenu():Menu(NULL){
+	MainMenu(MenuHandler *handler = NULL):Menu(NULL,handler){
 		hMenu = CreateMenu();
 	}
 	virtual int event(int id) {
 		return 0;
 	}
 };
+
+//------------------------------------------------------------------------------
+
 
 class Form :public Container{
 protected:
@@ -234,6 +305,9 @@ public:
 	}
 	void menu(const Menu &m) {
 		m_menu=*(MainMenu*)&m;
+		if (m.handler()) {
+			eventListener.addref(Event::MENU, *m.handler());
+		}
 		SetMenu(hWnd,m_menu.hMenu);
 	}
 
@@ -246,6 +320,9 @@ public:
 		eventListener.add(Event::MENU, f,w);
 	}
 
+	void onMenu(MenuHandler &f,int){
+		eventListener.addref(Event::MENU, f);
+	}
 
 	template<typename FUNC>
 	void onClick(FUNC f){
@@ -299,12 +376,25 @@ public:
 						w->event(&ev);
 					}
 				}
+				break;
 			case WM_LBUTTONUP:
 				{
 					ev.type=Event::CLICK;
 					eventListener.call(ev);
 				}
 				break;
+			case WM_VSCROLL:
+			case WM_HSCROLL:
+				if ((HWND)lParam != hWnd) {
+					Widget *w = (Widget*)GetWindowLongPtr((HWND)lParam ,GWLP_USERDATA);
+					if (w) {
+						ev.target = w;
+						ev.type=Event::CHANGE;
+						ev.id = wParam;
+						w->event(&ev);
+					}
+				}
+			break;
 			case WM_SIZE:
 				{
 					RECT rc;

@@ -56,7 +56,10 @@ public:
 	const static int ANY = 0;
 	const static int CLICK = 1;
 	const static int MENU = 2;
-	const static int EMAX = 3;
+	const static int CHANGE = 3;
+	const static int PAINT = 4;
+	const static int ANYTHING = 5;
+	const static int EMAX = 6;
 };
 typedef bool (*EVENT_LISTENER)(Event &e);
 
@@ -70,11 +73,12 @@ template<typename F>
 class EventListenerFunc : public EventListenerFuncBase {
 public:
 	F func;
-	EventListenerFunc(F f){func=f;}
+	EventListenerFunc(F f): func(f){}
 	bool operator() (Event e){
 		return func(e);
 	}
 };
+
 template<typename F,typename C>
 class EventListenerFunc2 : public EventListenerFuncBase {
 public:
@@ -86,10 +90,20 @@ public:
 	}
 };
 
+template<typename F>
+class EventListenerFuncRef : public EventListenerFuncBase {
+public:
+	F &func;
+	EventListenerFuncRef(F &f): func(f){}
+	bool operator() (Event e){
+		return func(e);
+	}
+};
+
 class EventListeners
 {
 	// 数が増えたらmapにする
-//	std::map<int,EVENT_LISTENER> listeners;
+//	std::map<int,EventListenerFuncBase*> listeners;
 	EventListenerFuncBase* listeners[Event::EMAX];
 public:
 	EventListeners(){
@@ -101,10 +115,26 @@ public:
 	template <typename T>
 	void add(int event,T listener){
 		if(listeners[event]) delete listeners[event];
+		listeners[event] = new EventListenerFunc<T>(listener);
+	}
+
+	template <typename T>
+	void addref(int event,T &listener){
+		if(listeners[event]) delete listeners[event];
+		listeners[event] = new EventListenerFuncRef<T>(listener);
+	}
+
+
+	template <typename T>
+	void add(int event,T* listener){
+		if(listeners[event]) delete listeners[event];
 		if (listener!=NULL) {
-			listeners[event] = new EventListenerFunc<T>(listener);
+			listeners[event] = new EventListenerFunc<T*>(listener);
+		} else {
+			listeners[event] = NULL;
 		}
 	}
+
 	template <typename T,typename C>
 	void add(int event,T listener,C obj){
 		if(listeners[event]) delete listeners[event];
@@ -217,6 +247,11 @@ public:
 	void font(const std::string &name, int height){
 		font(&Font(name,height),true);
 	}
+	
+	void topmost(bool f){
+		SetWindowPos( hWnd, f?HWND_TOPMOST:HWND_NOTOPMOST, 0, 0, 0, 0, (SWP_SHOWWINDOW|SWP_NOMOVE|SWP_NOSIZE) );
+	}
+	
 	void close(){
 		DestroyWindow(hWnd);
 	}
@@ -396,6 +431,18 @@ public:
 				GetModuleHandle(NULL),NULL);
 		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)this);
 	}
+
+	template<typename FUNC>
+	Button(const std::string &s, FUNC f, int i=0){
+		eventListener.add(Event::CLICK, f);
+		hWnd = CreateWindow(
+				("BUTTON"),s.c_str(),WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+				0, 0,80, 24, HWND_MESSAGE,
+				(HMENU)(INT_PTR)i,                      // メニューハンドル(ID)
+				GetModuleHandle(NULL),NULL);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)this);
+	}
+
 	Button(const std::string &s="",int i=0,EVENT_LISTENER f=NULL){
 		eventListener.add(Event::CLICK, f);
 		hWnd = CreateWindow(
@@ -406,6 +453,14 @@ public:
 		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)this);
 	}
 
+	void bitmap(HBITMAP hBmp) {
+		SendMessage( hWnd, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp );
+	}
+	HBITMAP bitmap() {
+		return (HBITMAP)SendMessage( hWnd, BM_GETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)0 );
+	}
+
+
 	template<typename FUNC>
 	void onClick(FUNC f){
 		eventListener.add(Event::CLICK, f);
@@ -413,13 +468,6 @@ public:
 	template<typename FUNC,typename C>
 	void onClick(FUNC f, C* w){
 		eventListener.add(Event::CLICK, f,w);
-	}
-
-	void bitmap(HBITMAP hBmp) {
-		SendMessage( hWnd, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp );
-	}
-	HBITMAP bitmap() {
-		return (HBITMAP)SendMessage( hWnd, BM_GETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)0 );
 	}
 	bool event(Event *e) {
 		e->type=Event::CLICK;
@@ -459,7 +507,36 @@ public:
 	}
 };
 
+class CheckBox: public Widget{
+public:
+	CheckBox(const std::string &s="",int i=0){
+		hWnd = CreateWindow(
+				("BUTTON"),s.c_str(),WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX ,
+				0, 0,80, 24, HWND_MESSAGE,
+				(HMENU)(INT_PTR)i,                      // メニューハンドル(ID)
+				GetModuleHandle(NULL),NULL);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)this);
+	}
+	CheckBox(Widget &parent,const std::string &s="",int i=0){
+		hWnd = CreateWindow(
+				("BUTTON"),s.c_str(),WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX ,
+				0, 0,80, 24, parent.hWnd,
+				(HMENU)(INT_PTR)i,                      // メニューハンドル(ID)
+				GetModuleHandle(NULL),NULL);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)this);
+	}
+
+	void check(bool f){
+		SendMessage(hWnd , BM_SETCHECK , f?BST_CHECKED:BST_UNCHECKED , 0);
+	}
+	bool check(){
+		return SendMessage(hWnd , BM_GETCHECK , 0 , 0) == BST_CHECKED;
+	}
+
+};
+
 class PictureBox: public Widget{
+	EventListeners eventListener;
 public:
 	PictureBox(HBITMAP hBmp=NULL,int i=0){
 		hWnd = CreateWindow(
@@ -478,6 +555,24 @@ public:
 	}
 	void update(){
 		InvalidateRect(hWnd,NULL,FALSE);
+	}
+
+
+	template<typename FUNC>
+	void onClick(FUNC f){
+		long l=GetWindowLong(hWnd,GWL_STYLE);
+		SetWindowLong(hWnd,GWL_STYLE,f|SS_NOTIFY);
+		eventListener.add(Event::CLICK, f);
+	}
+	template<typename FUNC,typename C>
+	void onClick(FUNC f, C* w){
+		long l=GetWindowLong(hWnd,GWL_STYLE);
+		SetWindowLong(hWnd,GWL_STYLE,f|SS_NOTIFY);
+		eventListener.add(Event::CLICK, f,w);
+	}
+	bool event(Event *e) {
+		e->type=Event::CLICK;
+		return eventListener.call(*e);
 	}
 };
 
@@ -584,7 +679,10 @@ public:
 };
 
 class Slider: public Widget{
+	EventListeners eventListener;
 public:
+	const static bool HORIZONTAL = false;
+	const static bool VERTICAL = true;
 	Slider(bool vflag=false,int i=0){
 		hWnd = CreateWindow(
 				("msctls_trackbar32"),"",WS_CHILD|WS_VISIBLE|(vflag?TBS_VERT:TBS_HORZ),
@@ -594,12 +692,34 @@ public:
 		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)this);
 	}
 	Slider(HWND parent,bool vflag=false,int i=0){
+		int w,h;
+		if (vflag) {
+			w=24; h=160;
+		} else {
+			w=160; h=24;
+		}
 		hWnd = CreateWindow(
 				("msctls_trackbar32"),"",WS_CHILD|WS_VISIBLE|(vflag?TBS_VERT:TBS_HORZ),
-				0, 0,160, 24, parent,
+				0, 0, w, h, parent,
 				(HMENU)(INT_PTR)i,                      // メニューハンドル(ID)
 				GetModuleHandle(NULL),NULL);
 		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)this);
+		range(0,255);
+	}
+	Slider(Widget &parent,bool vflag=false,int i=0){
+		int w,h;
+		if (vflag) {
+			w=24; h=160;
+		} else {
+			w=160; h=24;
+		}
+		hWnd = CreateWindow(
+				("msctls_trackbar32"),"",WS_CHILD|WS_VISIBLE|(vflag?TBS_VERT:TBS_HORZ),
+				0, 0, w, h, parent.hWnd,
+				(HMENU)(INT_PTR)i,                      // メニューハンドル(ID)
+				GetModuleHandle(NULL),NULL);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)this);
+		range(0,255);
 	}
 	void range(int min,int max){
 		SendMessage(hWnd,TBM_SETRANGE,1,MAKELPARAM(min,max));
@@ -609,6 +729,15 @@ public:
 	}
 	void pos(int c){
 		SendMessage(hWnd,TBM_SETPOS,1,c);
+	}
+
+
+	template<typename FUNC>
+	void onChange(FUNC f){
+		eventListener.add(Event::CHANGE, f);
+	}
+	bool event(Event *e) {
+		return eventListener.call(*e);
 	}
 };
 

@@ -243,7 +243,13 @@ public:
 		return readStr(s,'\n');
 	}
 	std::string readLine(){
-		return readStr('\n');
+		std::string s;
+		char c;
+		while (recv(&c,1) && c!='\0' && c!='\n') {
+			if (c != '\r')
+			s.push_back(c);
+		}
+		return s;
 	}
 
 	bool error() const{
@@ -282,6 +288,10 @@ public:
 			soc.close();
 			return;
 		}
+	}
+	
+	void close() {
+		soc.close();
 	}
 
 	Socket accept(){

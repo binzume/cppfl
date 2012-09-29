@@ -88,7 +88,7 @@ public:
 
 class Resources{
 public:
-	static WBitmap LoadBitmap(const std::string name){
+	static WBitmap LoadBitmap(const std::string &name){
 		HBITMAP hBitmap;
 		hBitmap = (HBITMAP)LoadImage( NULL, name.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE );
 		return WBitmap(hBitmap);
@@ -97,11 +97,11 @@ public:
 		return WBitmap((HBITMAP)LoadImage(Application.hInstance, (PCSTR)id, IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR ));
 	}
 	static WIcon getIcon(int id){
-		return WIcon((HICON)LoadImage(Application.hInstance, (PCSTR)id, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR ));
+		return WIcon((HICON)LoadImage(Application.hInstance, (PCSTR)id, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_SHARED ));
 		//return WIcon((HICON)::LoadIcon(Application.hInstance,(PCSTR)id ));
 	}
-	static WIcon getIcon(const std::string name){
-		return WIcon((HICON)LoadImage(Application.hInstance, name.c_str(), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR ));
+	static WIcon getIcon(const std::string &name){
+		return WIcon((HICON)LoadImage(Application.hInstance, name.c_str(), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_SHARED));
 		//return WIcon((HICON)::LoadIcon(Application.hInstance, name.c_str() ));
 	}
 };

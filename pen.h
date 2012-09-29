@@ -251,7 +251,10 @@ public:
 		init();
 	}
 
-	DCPen(HDC hdc,int width, int height) : m_size(width,height){
+	DCPen(HDC hdc,int width=-1, int height=-1) : m_size(width,height){
+		if (width<0) {
+			m_size = Size(GetDeviceCaps(hDC, HORZRES),GetDeviceCaps(hDC, VERTRES));
+		}
 		hDC=hdc;
 		hdcown=false;
 		SetBkMode(hDC,TRANSPARENT);
@@ -353,7 +356,7 @@ public:
 	void draw(Point p,DCPen *src,Rect rc) {
 		BitBlt(hDC,p.x,p.y,rc.w,rc.h,src->hDC,rc.x,rc.y,SRCCOPY);
 	}
-	void draw(Point p,HDC hdc,Rect rc) {
+	void draw(Point p,HDC hdc,const Rect &rc) {
 		BitBlt(hDC,p.x,p.y,rc.w,rc.h,hdc,rc.x,rc.y,SRCCOPY);
 	}
 	const Size& size(){return m_size;};
