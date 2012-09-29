@@ -79,7 +79,13 @@ public:
 		++it; // "
 		for (;*it!='\"';++it) {
 			if (it == end) return false;
-			if (*it == '\\' && ++it == end) return false;
+			if (*it == '\\') {
+				if (++it == end) return false;
+				if (*it == 'n') {
+					v.append("\n");
+					continue;
+				}
+			}
 			v+=*it;
 		}
 		++it;

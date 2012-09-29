@@ -17,6 +17,7 @@
 #	include <netinet/in.h>
 #	include <netinet/tcp.h>
 #	include <arpa/inet.h>
+#	include <memory.h>
 #	define closesocket close
 	typedef int SOCKET;
 #endif
@@ -70,7 +71,7 @@ WinsockInit WinsockInit::instance;
 #endif
 #endif
 
-// PDP–¢‘Î‰žw
+// PDP–¢‘Î‰ž
 #if NETWORK_BYTE_ORDER != BYTE_ORDER
 static inline long NN(long x){
 	x = x >> 16 | x << 16;
@@ -289,7 +290,7 @@ public:
 			return;
 		}
 	}
-	
+
 	void close() {
 		soc.close();
 	}

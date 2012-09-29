@@ -1,23 +1,27 @@
-#ifndef HTTP_H
-#define HTTP_H
+#ifndef NET_HTTP_H_
+#define NET_HTTP_H_
 #include <string>
 #include <vector>
 #include <map>
 #include "socket.h"
 
-namespace Net
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+namespace net
 {
 std::string urlencode(const std::string &str)
 {
 	std::string s;
 	for (std::string::const_iterator it = str.begin();it!=str.end();++it) {
 		char c = *it;
-		char h[8];
 		if (c>='A' && c<='Z' || c>='a' && c<='z' || c>='0' && c<='9') {
-			s+=c;
+			s.push_back(c);
 		} else {
-			sprintf(h,"%%%02x",c);
-			s+=h;
+			char h[8];
+			sprintf(h,"%%%02x",c&0xff);
+			s.append(h);
 		}
 	}
 	return s;
