@@ -46,6 +46,12 @@ void encode(std::string &dst, const std::string &src) {
 	encode(dst,src.begin(),src.end());
 }
 
+std::string encode(const std::string &src) {
+	std::string dst;
+	encode(dst,src);
+	return dst;
+}
+
 template <typename T>
 void decode(std::string &dst, T it,const T end) {
 	int b = 0 , d = 0;
@@ -75,6 +81,12 @@ void decode(std::string &dst, T it,const T end) {
 
 void decode(std::string &dst, const std::string &src) {
 	decode(dst,src.begin(),src.end());
+}
+
+std::string decode(const std::string &src) {
+	std::string dst;
+	decode(dst,src);
+	return dst;
 }
 
 }
