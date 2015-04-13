@@ -1,7 +1,7 @@
 #undef NDEBUG
 #include <cassert>
 #include <iostream>
-#include "json.h"
+#include "../include/json.h"
 using namespace std;
 
 #define EPSILON 1e-8
@@ -30,6 +30,7 @@ void test() {
     assert(v[2][3]["hoge"].to_i() == -123000000);
     assert(fabs(v[2][3]["fuga"].to_f() - 3.14159) < EPSILON);
     assert(v[1].is_null());
+    cout << "ok." << endl;
 
 }
 
