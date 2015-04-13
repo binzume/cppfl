@@ -8,6 +8,8 @@
 #include <vector>
 #include <map>
 
+#define JSON_CONST(...) parse((#__VA_ARGS__))
+
 namespace json {
 
 struct jstype {
@@ -33,12 +35,13 @@ template <typename T> T static_data<T>::nullobj;
 class jsvalue {
 public:
 	jstype type;
+	double value_number;
 	long value_int;
 	std::string value_string;
 	std::map<std::string,jsvalue> value_object;
 	std::vector<jsvalue> value_array;
 
-	jsvalue():value_int(0){}
+	jsvalue():value_int(0),value_number(0){}
 	jsvalue& operator [](const std::string &k) {
 		if (type != jstype::object)
 			return static_data<jsvalue>::nullobj;
@@ -68,8 +71,14 @@ public:
 		return value_string;
 	}
 	long to_i(){
-		return value_int;
+		return (long)value_number;
 	}
+
+	double to_f(){
+		return value_number;
+	}
+
+	operator double(){return to_f();}
 	operator int(){return to_i();}
 	operator std::string(){return to_s();}
 };
@@ -104,6 +113,22 @@ public:
 	}
 
 	template <typename IT>
+	void parse_numberv(double &v, IT &it, const IT &end){
+		int sign = 1;
+		if (*it == '-') {
+			sign = -1;
+			++it;
+		} else if (*it == '+') ++it;
+		for (v=0; it != end && isdigit(*it); ++it) v = v*10 + *it-'0';
+		if (*it == '.') {
+			++it;
+			for (int d = 10; it != end && isdigit(*it); ++it, d*=10) v += (*it-'0') / (double)d;
+		}
+		v *= sign;
+	}
+
+
+	template <typename IT>
 	bool parse_str(jsvalue &node, IT &it, const IT &end){
 		node.type = jstype::string;
 		return parse_strv(node.value_string,it,end);
@@ -118,6 +143,20 @@ public:
 			parse_intv(d,++it,end);
 			for (;d>0;d--) node.value_int *= 10;
 		}
+		node.value_number = node.value_int;
+		return true;
+	}
+
+	template <typename IT>
+	bool parse_number(jsvalue &node, IT &it, const IT &end){
+		node.type = jstype::number;
+		parse_numberv(node.value_number,it,end);
+		if (*it == 'E' || *it=='e') {
+			long d;
+			parse_intv(d,++it,end);
+			for (;d>0;d--) node.value_number *= 10;
+		}
+		node.value_int = (long)node.value_number;
 		return true;
 	}
 
@@ -136,7 +175,7 @@ public:
 	}
 
 	template <typename IT>
-	bool parse_obj(jsvalue &node, IT &it, const IT &end){
+	bool parse_obj(jsvalue &node, IT &it, const IT &end) {
 		node.type = jstype::object;
 		skip(++it,end);
 		for (;*it != '}';++it) {
@@ -154,18 +193,18 @@ public:
 	}
 
 	template <typename IT>
-	bool parse_word(jsvalue &node, IT &it, const IT &end){
+	bool parse_word(jsvalue &node, IT &it, const IT &end) {
 		std::string w;
 		for (;it != end && isalpha(*it);++it) w+=*it;
 		if (w == "true") {
 			node.type = jstype::boolean;
-			node.value_int = 1;
+			node.value_number = 1;
 		} else if (w == "false") {
 			node.type = jstype::boolean;
-			node.value_int = 0;
+			node.value_number = 0;
 		} else {
 			node.type = jstype::null;
-			node.value_int = 0;
+			node.value_number = 0;
 		}
 		return it != end;
 	}
@@ -185,7 +224,7 @@ public:
 		else if (*it == '\"' || *it == '\'')
 			parse_str(node,it,end);
 		else if (*it >= '0' && *it <= '9' || *it=='-')
-			parse_int(node,it,end);
+			parse_number(node,it,end);
 		else
 			parse_word(node,it,end);
 		skip(it,end);
@@ -201,6 +240,13 @@ public:
 	bool parse(jsvalue &node,const std::string &str) {
 		std::string::const_iterator it = str.begin();
 		return parse_(node,it,str.end());
+	}
+
+	jsvalue parse(const std::string &str) {
+		json::jsvalue v;
+		std::string::const_iterator it = str.begin();
+		parse_(v,it,str.end());
+		return v;
 	}
 
 };
