@@ -73,12 +73,15 @@ WinsockInit WinsockInit::instance;
 
 // PDP–¢‘Î‰ž
 #if NETWORK_BYTE_ORDER != BYTE_ORDER
-static inline long NN(long x){
-	x = x >> 16 | x << 16;
+static inline int NN(int x){
+	x = (unsigned int)x >> 16 | x << 16;
 	return ((x & 0xff00ff00) >> 8) | ((x&0x00ff00ff) << 8);
 }
+static inline long long NN(long long x){
+	return (unsigned long long)NN((int)(x >> 32)) | (long long)NN(int(x)) << 32;
+}
 static inline short NN(short x){
-	return (x>>8) | (x<<8);
+	return ((unsigned short)x>>8) | (x<<8);
 }
 #else
 template<T>
@@ -191,7 +194,7 @@ public:
 	}
 
 
-	int writeInt(long d){
+	int writeInt(int d){
 		d=NN(d);
 		return send(&d,sizeof(d));
 	}
@@ -211,7 +214,12 @@ public:
 	}
 
 	int readInt(){
-		long d;
+		int d;
+		recv(&d,sizeof(d));
+		return NN(d);
+	}
+	long long readInt64(){
+		long long d;
 		recv(&d,sizeof(d));
 		return NN(d);
 	}
@@ -289,10 +297,6 @@ public:
 			soc.close();
 			return;
 		}
-	}
-
-	void close() {
-		soc.close();
 	}
 
 	Socket accept(){

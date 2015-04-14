@@ -42,6 +42,10 @@ public:
 	std::vector<jsvalue> value_array;
 
 	jsvalue():value_int(0),value_number(0){}
+	jsvalue(double v):value_int(v),value_number(v), type(jstype::number){}
+	jsvalue(const std::string &v):value_int(0), value_number(0), value_string(v), type(jstype::string){}
+	// jsvalue(bool v):value_int(v), value_number(0), type(jstype::boolean){}
+
 	jsvalue& operator [](const std::string &k) {
 		if (type != jstype::object)
 			return static_data<jsvalue>::nullobj;
@@ -55,32 +59,34 @@ public:
 			return static_data<jsvalue>::nullobj;
 		return value_array[k];
 	}
-	size_t size(){
+	size_t size() const {
 		return (type==jstype::object)?value_object.size():value_array.size();
 	}
 	
-	bool is_null() { return type == jstype::null; }
-	bool is_array() { return type == jstype::array; }
-	bool is_object() { return type == jstype::object; }
-	bool is_string() { return type == jstype::string; }
-	bool is_number() { return type == jstype::number; }
+	bool is_null() const { return type == jstype::null; }
+	bool is_array() const { return type == jstype::array; }
+	bool is_object() const { return type == jstype::object; }
+	bool is_string() const { return type == jstype::string; }
+	bool is_number() const { return type == jstype::number; }
+	bool is_boolean() const { return type == jstype::boolean; }
 	const std::vector<jsvalue>& get_array() const { return value_array; }
 	const std::map<std::string,jsvalue>& get_object() const { return value_object; }
 
-	std::string to_s() {
+	const std::string to_s() const {
 		return value_string;
 	}
-	long to_i(){
+	long to_i() const {
 		return (long)value_number;
 	}
 
-	double to_f(){
+	double to_f() const {
 		return value_number;
 	}
 
-	operator double(){return to_f();}
-	operator int(){return to_i();}
-	operator std::string(){return to_s();}
+	operator double() const {return to_f();}
+	operator int() const {return to_i();}
+	operator std::string() const {return to_s();}
+	operator bool() const {return (bool)value_number;}
 };
 
 	template <typename IT>
@@ -248,6 +254,39 @@ public:
 		parse_(v,it,str.end());
 		return v;
 	}
+
+#ifdef _IOSTREAM_
+	static inline std::ostream& operator<< (std::ostream &os,const jsvalue &v) {
+		if (v.is_number()) {
+			os << v.value_number;
+		} else if (v.is_string()) {
+			// TODO: escape
+			os << "\"" << v.value_string  << "\"";
+		} else if (v.is_object()) {
+			os << "{";
+			for (auto it = v.get_object().begin(); it != v.get_object().end(); ++it) {
+				if (it != v.get_object().begin()) os << ",";
+				os << "\"" << it->first << "\" : " << it->second;
+			}
+			os << "}";
+		} else if (v.is_array()) {
+			os << "[";
+			for (auto it = v.get_array().begin(); it != v.get_array().end(); ++it) {
+				if (it != v.get_array().begin()) os << ",";
+				os << *it;
+			}
+			os << "]";
+		} else if (v.is_boolean()) {
+			os << (v ? "true" : "false");
+		} else if (v.is_null()) {
+			os << "null";
+		} else {
+			os << "{\"TYPE_ERROR\"}";
+		}
+		return os;
+	}
+#endif
+
 
 };
 #endif

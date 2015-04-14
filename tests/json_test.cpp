@@ -7,7 +7,7 @@ using namespace std;
 #define EPSILON 1e-8
 
 void test() {
-    json::jsvalue v = json::JSON_CONST([
+	json::jsvalue v = json::JSON_CONST([
 	    1,null,
 	    [
 	      31 , 32, "asdfg\"hjk" ,
@@ -16,8 +16,10 @@ void test() {
 	        "fuga" : 3.14159
 	      },123
 	    ],
-	    null,5,0
-    ]);
+	    null, true, false, -1, 0, 0.5
+	]);
+
+	cout << v << endl;
 
     cout << (int)v[2][1] << endl;
     cout << (string)v[2][2] << endl;

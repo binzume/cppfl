@@ -16,7 +16,8 @@ namespace net{
 			port = 0;
 			valid = true;
 			int st = 0;
-			for (auto c : s) {
+			for (auto it = s.begin(); it != s.end(); it++) {
+			    auto c = *it;
 				if (st == 0) {
 					if (c == ':') {
 						st = 1;
