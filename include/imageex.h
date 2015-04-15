@@ -1,6 +1,7 @@
 #ifndef _IMAGE_EX_H
 #define _IMAGE_EX_H
-#include "image.h"
+#include "base.h"
+#include "bitmap.h"
 #include <math.h>
 
 #ifndef MessageBox // FIXME

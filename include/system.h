@@ -68,6 +68,11 @@ public:
 	void capture(DIBitmap &bmp, int x, int y) {
 		BitBlt(bmp.getdc(),0,0,bmp.width,bmp.height,hdc,x,y,SRCCOPY);
 	}
+	DIBitmap* capture() {
+		DIBitmap *bmp = new DIBitmap(width,height);
+		capture(*bmp, 0, 0, width, height);
+		return bmp;
+	}
 	DIBitmap* capture(int x, int y, int w, int h) {
 		DIBitmap *bmp = new DIBitmap(w,h);
 		capture(*bmp, x, y, w, h);

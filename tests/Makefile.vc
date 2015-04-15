@@ -1,0 +1,21 @@
+CC=cl.exe
+CFLAGS=-EHsc -MT -nologo -D_CRT_SECURE_NO_DEPRECATE -DWIN32
+
+SRC = json_test.cpp base64_test.cpp date_test.cpp encode_test.cpp
+EXE = $(SRC:%.cpp=%.exe)
+
+all: test
+
+test: compile $(SRC:%.cpp=%.test)
+
+compile: $(EXE)
+
+%.exe : %.cpp
+	$(CC) $(CFLAGS) $<
+	./$@
+
+%.test :
+	./$*
+
+clean:
+	rm *.exe *.obj
