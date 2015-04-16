@@ -33,6 +33,7 @@ namespace kwlib{
 #define _USEDIB
 
 #include "pen.h"
+#include "image.h"
 #include "imageex.h"
 #include "imagetool.h"
 #include "bmpwindow.h"
