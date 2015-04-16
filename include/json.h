@@ -1,5 +1,5 @@
 /*
- * simple json parser  for C++
+ * simple json library for C++
  *    http://www.binzume.net/software/cppfl/
  */
 #ifndef CPPFL_JSON_H
@@ -12,82 +12,82 @@
 
 namespace json {
 
-struct jstype {
-	enum enum_t{
-		null,
-		boolean,
-		number,
-		string,
-		array,
-		object,
+	struct jstype {
+		enum enum_t{
+			null,
+			boolean,
+			number,
+			string,
+			array,
+			object,
+		};
+		enum_t value;
+		jstype():value(null){}
+		jstype(enum_t v):value(v){}
+		operator enum_t() const {return value;}
 	};
-	enum_t value;
-	jstype():value(null){}
-	jstype(enum_t v):value(v){}
-	operator enum_t() const {return value;}
-};
 
-template <typename T> struct static_data {
-  static T nullobj;
-};
-template <typename T> T static_data<T>::nullobj;
+	template <typename T> struct static_data {
+	  static T nullobj;
+	};
+	template <typename T> T static_data<T>::nullobj;
 
-class jsvalue {
-public:
-	jstype type;
-	double value_number;
-	long value_int;
-	std::string value_string;
-	std::map<std::string,jsvalue> value_object;
-	std::vector<jsvalue> value_array;
+	class jsvalue {
+	public:
+		jstype type;
+		double value_number;
+		long value_int;
+		std::string value_string;
+		std::map<std::string,jsvalue> value_object;
+		std::vector<jsvalue> value_array;
 
-	jsvalue():value_int(0),value_number(0){}
-	jsvalue(double v):value_int(v),value_number(v), type(jstype::number){}
-	jsvalue(const std::string &v):value_int(0), value_number(0), value_string(v), type(jstype::string){}
-	// jsvalue(bool v):value_int(v), value_number(0), type(jstype::boolean){}
+		jsvalue():value_int(0),value_number(0){}
+		jsvalue(double v):value_int(v),value_number(v), type(jstype::number){}
+		jsvalue(const std::string &v):value_int(0), value_number(0), value_string(v), type(jstype::string){}
+		// jsvalue(bool v):value_int(v), value_number(0), type(jstype::boolean){}
 
-	jsvalue& operator [](const std::string &k) {
-		if (type != jstype::object)
-			return static_data<jsvalue>::nullobj;
-		return value_object[k];
-	}
-	jsvalue& operator [](const char *k) {
-		return (*this)[std::string(k)];
-	}
-	jsvalue& operator [](int k) {
-		if (type != jstype::array || k>=value_array.size())
-			return static_data<jsvalue>::nullobj;
-		return value_array[k];
-	}
-	size_t size() const {
-		return (type==jstype::object)?value_object.size():value_array.size();
-	}
-	
-	bool is_null() const { return type == jstype::null; }
-	bool is_array() const { return type == jstype::array; }
-	bool is_object() const { return type == jstype::object; }
-	bool is_string() const { return type == jstype::string; }
-	bool is_number() const { return type == jstype::number; }
-	bool is_boolean() const { return type == jstype::boolean; }
-	const std::vector<jsvalue>& get_array() const { return value_array; }
-	const std::map<std::string,jsvalue>& get_object() const { return value_object; }
+		jsvalue& operator [](const std::string &k) {
+			if (type != jstype::object)
+				return static_data<jsvalue>::nullobj;
+			return value_object[k];
+		}
+		jsvalue& operator [](const char *k) {
+			return (*this)[std::string(k)];
+		}
+		jsvalue& operator [](int k) {
+			if (type != jstype::array || k>=value_array.size())
+				return static_data<jsvalue>::nullobj;
+			return value_array[k];
+		}
+		size_t size() const {
+			return (type==jstype::object)?value_object.size():value_array.size();
+		}
 
-	const std::string to_s() const {
-		return value_string;
-	}
-	long to_i() const {
-		return (long)value_number;
-	}
+		bool is_null() const { return type == jstype::null; }
+		bool is_array() const { return type == jstype::array; }
+		bool is_object() const { return type == jstype::object; }
+		bool is_string() const { return type == jstype::string; }
+		bool is_number() const { return type == jstype::number; }
+		bool is_boolean() const { return type == jstype::boolean; }
+		const std::vector<jsvalue>& get_array() const { return value_array; }
+		const std::map<std::string,jsvalue>& get_object() const { return value_object; }
 
-	double to_f() const {
-		return value_number;
-	}
+		const std::string to_s() const {
+			return value_string;
+		}
+		long to_i() const {
+			return (long)value_number;
+		}
 
-	operator double() const {return to_f();}
-	operator int() const {return to_i();}
-	operator std::string() const {return to_s();}
-	operator bool() const {return (bool)value_number;}
-};
+		double to_f() const {
+			return value_number;
+		}
+
+		operator double() const {return to_f();}
+		operator int() const {return to_i();}
+		operator std::string() const {return to_s();}
+		operator bool() const {return (bool)value_number;}
+	};
 
 	template <typename IT>
 	bool parse_strv(std::string &v, IT &it, const IT &end){
@@ -260,12 +260,23 @@ public:
 		if (v.is_number()) {
 			os << v.value_number;
 		} else if (v.is_string()) {
-			// TODO: escape
-			os << "\"" << v.value_string  << "\"";
+			// TODO: SJIS mode
+			os << "\"";
+			for (auto it = v.value_string.begin(); it != v.value_string.end(); ++it) {
+				if (*it == '\"') {
+					os << "\\\"";
+				} else if (*it == '\n') {
+					os << "\\n";
+				} else {
+					os << *it;
+				}
+			}
+			os << "\"";
 		} else if (v.is_object()) {
 			os << "{";
 			for (auto it = v.get_object().begin(); it != v.get_object().end(); ++it) {
 				if (it != v.get_object().begin()) os << ",";
+				// TODO: escapoe key string
 				os << "\"" << it->first << "\" : " << it->second;
 			}
 			os << "}";
@@ -286,7 +297,6 @@ public:
 		return os;
 	}
 #endif
-
 
 };
 #endif
