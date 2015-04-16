@@ -14,7 +14,6 @@ namespace net{
 		std::string fragment;
 		Url(const std::string &s) {
 			port = 0;
-			valid = true;
 			int st = 0;
 			for (auto it = s.begin(); it != s.end(); it++) {
 			    auto c = *it;
@@ -68,19 +67,20 @@ namespace net{
 					fragment.push_back(c);
 				}
 			}
+			valid = st >= 2; // scheme://host
 		}
-		std::string str(bool frag = false) {
+		std::string str(bool usefrag = true) {
 			std::stringstream ss;
 			ss << scheme << "://" << host;
 			if (port) ss <<  ":" << port;
 			ss << path;
 			if (query.size()) ss << "?" << query;
-			if (frag && fragment.size()) ss << "#" << fragment;
+			if (usefrag && fragment.size()) ss << "#" << fragment;
 			return ss.str();
 		}
 	};
 
-	Url parse_url(const std::string &s) {
+	inline static Url parse_url(const std::string &s) {
 		return Url(s);
 	}
 

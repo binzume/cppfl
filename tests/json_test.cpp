@@ -1,8 +1,10 @@
 #undef NDEBUG
+#include <cmath>
 #include <cassert>
 #include <iostream>
 #include <sstream>
 #include "../include/json.h"
+#include <iomanip>
 using namespace std;
 
 #define EPSILON 1e-8
@@ -28,11 +30,12 @@ void test() {
 	cout << v[1].is_null() << endl;
 
 	// stringify
-	cout << v << endl;
 	stringstream ss;
+	ss << std::setprecision( 10 );
 	ss << v;
+	cout << ss.str() << endl;
 
-	assert(ss.str() == "[1,null,[31,32,\"asdfg\\\"hjk\",{\"fuga\" : 3.14159,\"hoge\" : -1.23e+008},123],null,true,false,-1,0,0.5,{},[],\"\"]");
+	assert(ss.str() == "[1,null,[31,32,\"asdfg\\\"hjk\",{\"fuga\" : 3.14159,\"hoge\" : -123000000},123],null,true,false,-1,0,0.5,{},[],\"\"]");
 	assert((int)v[2][1] == 32);
 	assert((string)v[2][2] == "asdfg\"hjk");
 	assert(v[2][3]["hoge"].to_i() == -123000000);
