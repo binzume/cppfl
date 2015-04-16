@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <ostream>
 
 #define JSON_CONST(...) parse((#__VA_ARGS__))
 
@@ -255,7 +256,6 @@ namespace json {
 		return v;
 	}
 
-#ifdef _IOSTREAM_
 	static inline std::ostream& operator<< (std::ostream &os,const jsvalue &v) {
 		if (v.is_number()) {
 			os << v.value_number;
@@ -296,7 +296,6 @@ namespace json {
 		}
 		return os;
 	}
-#endif
 
 };
 #endif
