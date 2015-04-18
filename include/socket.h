@@ -299,6 +299,10 @@ public:
 		}
 	}
 
+	void close() {
+		soc.close();
+	}
+
 	Socket accept(){
 		socklen_t addrsize=sizeof(m_addr);
 		return Socket(::accept(soc.m_socket, (sockaddr*)&m_addr, &addrsize));
