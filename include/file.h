@@ -61,12 +61,12 @@ static dirent* readdir(DIR *d){
 
 class File{
 public:
-	//std::string path;
+	const std::string path;
 	FILE *fp;
-	File(const std::string &fname,const char *mode="rb") {
+	File(const std::string &fname,const char *mode="rb"): path(fname) {
 		fp=fopen(fname.c_str(),mode);
 	}
-	~File(){close();}
+	~File(){if (fp) close();}
 	template<typename T> T* load(){
 		long sz=size();
 		T* buf = new T[sz];
@@ -191,7 +191,15 @@ public:
 		std::string s=d->d_name;
 		return s;
 	}
+	std::vector<std::string> entries() {
+		std::vector<std::string> files;
+		for (;;) {
+			dirent *d=readdir(dir);
+			if (!d) break;
+			files.push_back(d->d_name);
+		}
+		return files;
+	}
 };
 
 #endif
-
