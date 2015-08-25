@@ -1,0 +1,21 @@
+CXX=g++
+CXXFLAGS=-std=c++0x -Wall
+
+SRC = json_test.cpp base64_test.cpp date_test.cpp encode_test.cpp url_test.cpp http_test.cpp
+EXE = $(SRC:%.cpp=%.out)
+
+all: test
+
+test: compile $(SRC:%.cpp=%.test)
+
+compile: $(EXE)
+
+%.out : %.cpp
+	$(CXX) $(CXXFLAGS) -o $*.out $<
+
+
+%.test :
+	./$*.out | tail -n 1
+
+clean:
+	rm *.out
