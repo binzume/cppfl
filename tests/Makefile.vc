@@ -1,5 +1,5 @@
-CC=cl.exe
-CFLAGS=-EHsc -MT -nologo -D_CRT_SECURE_NO_DEPRECATE -DWIN32
+CXX=cl.exe
+CXXFLAGS=-EHsc -MT -nologo -D_CRT_SECURE_NO_DEPRECATE -DWIN32
 
 SRC = json_test.cpp base64_test.cpp date_test.cpp encode_test.cpp
 EXE = $(SRC:%.cpp=%.exe)
@@ -11,7 +11,7 @@ test: compile $(SRC:%.cpp=%.test)
 compile: $(EXE)
 
 %.exe : %.cpp
-	$(CC) $(CFLAGS) $<
+	$(CXX) $(CXXFLAGS) $<
 	./$@
 
 %.test :

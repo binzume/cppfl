@@ -1,6 +1,8 @@
 #ifndef _SOCKET_H
 #define _SOCKET_H
-#include<string>
+#include <string>
+#include <cstdint>
+#include <ios>
 
 
 #ifdef _WIN32
@@ -73,15 +75,18 @@ WinsockInit WinsockInit::instance;
 
 // PDP–¢‘Î‰ž
 #if NETWORK_BYTE_ORDER != BYTE_ORDER
-static inline int NN(int x){
-	x = (unsigned int)x >> 16 | x << 16;
+static inline uint8_t NN(uint8_t x){
+	return x;
+}
+static inline uint16_t NN(uint16_t x){
+	return ((uint16_t)x>>8) | (x<<8);
+}
+static inline uint32_t NN(uint32_t x){
+	x = (uint32_t)x >> 16 | x << 16;
 	return ((x & 0xff00ff00) >> 8) | ((x&0x00ff00ff) << 8);
 }
-static inline long long NN(long long x){
-	return (unsigned long long)NN((int)(x >> 32)) | (long long)NN(int(x)) << 32;
-}
-static inline short NN(short x){
-	return ((unsigned short)x>>8) | (x<<8);
+static inline uint64_t  NN(uint64_t x){
+	return (uint64_t)NN((uint32_t)(x >> 32)) | (uint64_t)NN(uint32_t(x)) << 32;
 }
 #else
 template<T>
@@ -195,11 +200,11 @@ public:
 
 
 	int writeInt(int d){
-		d=NN(d);
+		d=NN((uint32_t)d);
 		return send(&d,sizeof(d));
 	}
 	int writeShort(short d){
-		d=NN(d);
+		d=NN((uint16_t)d);
 		return send(&d,sizeof(d));
 	}
 	int writeByte(char d){
@@ -214,24 +219,24 @@ public:
 	}
 
 	int readInt(){
-		int d;
+		uint32_t d;
 		recv(&d,sizeof(d));
-		return NN(d);
+		return (int)NN(d);
 	}
 	long long readInt64(){
-		long long d;
+		uint64_t d;
 		recv(&d,sizeof(d));
-		return NN(d);
+		return (long long)NN(d);
 	}
 	int readShort(){
-		short d;
+		uint16_t d;
 		recv(&d,sizeof(d));
-		return NN(d);
+		return (short)NN(d);
 	}
 	int readByte(){
-		char d;
+		uint8_t d;
 		recv(&d,sizeof(d));
-		return d;
+		return (int)d;
 	}
 
 	int readStr(std::string &s,char d='\0'){
@@ -312,6 +317,26 @@ public:
 	bool accepted() const{return soc.readable();}
 	bool error() const{return soc.error();}
 };
+
+class SBuf : public std::streambuf {
+public:
+	Socket *soc;
+    SBuf(Socket &socket) : soc(&socket) {}
+    virtual int overflow(int c = EOF) {
+		soc->writeByte(c);
+		return c;
+    }
+};
+
+
+class SocketOStream : public std::ostream {
+public:
+	SBuf sb;
+	Socket &soc;
+	SocketOStream(Socket &s) : soc(s), sb(s), std::ostream(&sb) {}
+};
+
+typedef SocketOStream SocketStream;
 
 
 #endif
