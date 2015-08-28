@@ -5,19 +5,19 @@
 using namespace std;
 
 
-void test() {
-
-	cout << base64::encode("abc1234") << endl;
-
+bool test()
+{
     assert(base64::encode("abc1234") == "YWJjMTIzNA==");
     assert(base64::decode("YWJjMTIzNA==") == "abc1234");
     assert(base64::decode("YWJjMTIz") == "abc123");
-    cout << "ok." << endl;
 
+	return true;
 }
 
-int main(int argc, char * argv[])
+int main(int argc,char *argv[])
 {
-	test();
+	if (test()) {
+		cout << "[OK]" << endl;
+	}
 	return 0;
 }

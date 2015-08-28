@@ -4,7 +4,7 @@
 #include "../include/http.h"
 using namespace std;
 
-void test()
+bool test()
 {
 
 	net::HttpClient client;
@@ -16,15 +16,16 @@ void test()
 
 
 	// Not found.
-	auto res2 = client.get("http://www.binzume.net/aqswdefrt5gy_not_exists");
+	auto res2 = client.get("http://www.binzume.net/aqswdefrtgy_not_exists_url");
 	assert(res2.status == 404);
 
-	cout << "ok." << endl;
+	return true;
 }
 
 int main(int argc,char *argv[])
 {
-	test();
+	if (test()) {
+		cout << "[OK]" << endl;
+	}
 	return 0;
 }
-

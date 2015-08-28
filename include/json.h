@@ -168,6 +168,11 @@ namespace json {
 	}
 
 	template <typename IT>
+	void skip(IT &it, const IT &end) {
+		while(it != end && isspace(*it)) ++it;
+	}
+
+	template <typename IT>
 	bool parse_array(jsvalue &node, IT &it, const IT &end){
 		node.type = jstype::array;
 		skip(++it,end);
@@ -217,11 +222,6 @@ namespace json {
 	}
 
 	template <typename IT>
-	void skip(IT &it, const IT &end) {
-		while(it != end && isspace(*it)) ++it;
-	}
-
-	template <typename IT>
 	bool parse_(jsvalue &node,IT &it, const IT &end) {
 		skip(it,end);
 		if (*it == '[')
@@ -244,12 +244,12 @@ namespace json {
 		return parse_(node,it,end);
 	}
 
-	bool parse(jsvalue &node,const std::string &str) {
+	inline bool parse(jsvalue &node,const std::string &str) {
 		std::string::const_iterator it = str.begin();
 		return parse_(node,it,str.end());
 	}
 
-	jsvalue parse(const std::string &str) {
+	inline jsvalue parse(const std::string &str) {
 		json::jsvalue v;
 		std::string::const_iterator it = str.begin();
 		parse_(v,it,str.end());

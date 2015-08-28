@@ -12,9 +12,8 @@ compile: $(EXE)
 
 %.exe : %.cpp
 	$(CXX) $(CXXFLAGS) $<
-	./$@
 
-%.test :
+%.test : %.exe
 	./$*
 
 clean:

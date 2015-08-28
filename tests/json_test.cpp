@@ -9,7 +9,7 @@ using namespace std;
 
 #define EPSILON 1e-8
 
-void test() {
+bool test() {
 	json::jsvalue v = json::JSON_CONST([
 		1,null,
 		[
@@ -42,11 +42,13 @@ void test() {
 	assert(fabs(v[2][3]["fuga"].to_f() - 3.14159) < EPSILON);
 	assert(v[1].is_null());
 
-	cout << "ok." << endl;
+	return true;
 }
 
-int main(int argc, char * argv[])
+int main(int argc,char *argv[])
 {
-	test();
+	if (test()) {
+		cout << "[OK]" << endl;
+	}
 	return 0;
 }
